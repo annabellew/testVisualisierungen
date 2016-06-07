@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<html>
 <meta charset="utf-8">
 <style>
 
@@ -18,11 +19,61 @@
 <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
 <script>
 
-$.getJSON( "http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/person/0bac9e1d-fb46-36db-80e5-a918ab485f6f&method=getAuthor&searcher=Elasticsearch", function (data) {
-	var thisAuthor = data.person[0]._source["@id"];
+$.getJSON( "http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/person/0bac9e1d-fb46-36db-80e5-a918ab485f6f&method=getAuthor&searcher=Elasticsearch", 
+function (data) {
+	var thisAuthor = data.person[0]._source["@id"];  //id des aktuellen Autors als URI
+	var thisAuthorName = "";  //Name des aktuell angezeigten Autors als String 
+	var dataObject = {};      //enthält später die Objekte "nodes" und "links"
+	var nodes = [];           //Knoten, die Autoren darstellen
+	var links = [];           //Verknüpfungen zwischen den Knoten
+	var contributorIds = [];  //Array der Autoren-IDs aus den bibliographicResources
+	var contributorNames = []; //Array mit den Autoren-Namen (aus Abfrage der contributorIds via Schnittstelle)
+	
+	//Alle Autoren-IDs aus den bibliographicResources sollen ins Array contributorIds geschrieben werden
 	$.each(data.bibliographicResource, function (key, value) {
-		console.log(key +" : " + value._source["dct:contributor"]);
-	})
+		contributorIds.push ({
+			value:_source["dct:contributor"]
+		});
+		
+	$.each(contributorIds, function (key, value) {
+		//Den Name des aktuellen Autors (der in der Mitte stehen soll) noch nicht nachschauen
+		if (value != thisAuthor) {			
+			//AJAX-Requests, um Namen der Autoren aus contributorIds zu erhalten
+			$.get("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/person/" + value + "&method=getAuthor&searcher=Elasticsearch",  
+			function (data) {
+				//Namen aus den Daten herauslesen und zu Array contributorNames hinzufügen
+				contributorNames.push ({data:person[0]._source["@id"]});
+			});
+		}
+	});
+	
+	//Namen des aktuellen Autors ermitteln
+	$.get("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/person/" + thisAuthor + "&method=getAuthor&searcher=Elasticsearch",  
+	function (data) {
+		//Namen aus den Daten herauslesen und Variable thisAuthorName überschreiben
+		thisAuthorName = data.person[0]._source["@id"];
+	});
+	
+	$.each(contributorNames, function (key, value) {
+		nodes.push ({
+			//Alle ausser dem aktuellen Autor sind in group 2
+			"name": value, "group":2
+		});				
+		
+		links.push ({
+			//Ausgangspunkt ist immer der Autor in der Mitte
+			"source": 0, "target": value, "value": 1
+		});
+		
+		dataObject.push ({
+			//aktueller Autor: group 1
+			"nodes": [{"name": thisAuthorName, "group": 1}, nodes],
+			"links": links
+		});
+		
+		//console.log(key +" : " + value._source["dct:contributor"]);
+		
+	});
 
 	
 
@@ -35,7 +86,8 @@ var width = 960,
 var color = d3.scale.category20();
 
 var force = d3.layout.force()
-    .charge(-120)
+    .gravity(0.1)
+    .charge(-1000)
     .linkDistance(30)
     .size([width, height]);
 
@@ -43,7 +95,7 @@ var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
-d3.json("data.json", function(error, graph) {
+d3.json(dataObject, function(error, graph) {
   if (error) throw error;
 
   force
@@ -81,3 +133,5 @@ d3.json("data.json", function(error, graph) {
 
 </script>
 
+</body>
+</html>
