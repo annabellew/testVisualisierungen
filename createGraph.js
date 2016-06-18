@@ -7,10 +7,25 @@ var contributorIds = [];  //Array der Autoren-IDs aus den bibliographicResources
 var contributorNames = []; //Array mit den Autoren-Namen (aus Abfrage der contributorIds via Schnittstelle)
 var queryString = "";      //String mit Autoren-IDs, mit dem die Multi-Autoren-Schnittstelle abgefragt wird
 
+//Autoren-IDs zum Ausprobieren
+//c7a1a5c2-903c-3524-a839-4e87fccbd7f1
+//0bac9e1d-fb46-36db-80e5-a918ab485f6f
+//825b0ab5-c490-38e8-af50-4ed444e87b44
+//5b590f17-2263-309f-bf3a-6c21e1970ad9
+//4ca6d8e1-694e-3fea-9cde-bc09a7b7f61c
+//51119347-fb51-37d9-ba90-af15b9b8aeff
+//514ac9b2-4204-3bd1-b7e1-bf6a58d81530 
+//05908eeb-56e9-37ed-b58d-5732d6a4e42f 
+//51119347-fb51-37d9-ba90-af15b9b8aeff
+//4ca699c9-5d74-3a9b-a24d-9d295f34508e
+ 
 //Abfrage der Ein-Autoren-Schnittstelle, welcher Autoren-Infos inkl. bibliographicResources zurückgibt
-$.getJSON( "http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/person/0bac9e1d-fb46-36db-80e5-a918ab485f6f&method=getAuthor&searcher=Elasticsearch", 
+$.getJSON( "http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/person/4ca699c9-5d74-3a9b-a24d-9d295f34508e&method=getAuthor&searcher=Elasticsearch", 
 function (data) {
-	var thisAuthor = data.person[0]['_source']["@id"];  //id des aktuellen Autors als URI	
+	var thisAuthor = data.person[0]['_source']['@id'];  //id des aktuellen Autors als URI	
+	
+	//Name des aktuellen Autors als String
+	thisAuthorName = data.person[0]['_source']['foaf:firstName'] + " " + data.person[0]['_source']['foaf:lastName']
 	
 	//Alle Autoren-IDs aus den bibliographicResources (ausser thisAuthor) sollen ins Array contributorIds geschrieben werden
 	$.each(data.bibliographicResource, function (key, value) {
@@ -55,8 +70,10 @@ function (data) {
 					// Zugriff auf JSON über "result"
 					$.each(result['person'], function (key, value) {
 						firstName = value['_source']['foaf:firstName'];
-						lastName = value['_source']['foaf:lastName'];					
+						lastName = value['_source']['foaf:lastName'];
+						name = value['_source']['foaf:name'];		
 						contributorNames.push (firstName + " " + lastName);
+						//contributorNames.push (name);
 					});				
 			},  
 			error: function(e) {console.log(e);}			
@@ -64,8 +81,10 @@ function (data) {
 	//Array, in dem die Namen der Co-Autoren stehen
 	console.log(contributorNames);
 });
-	
-/*
+
+//Das erste Objekt des node-Arrays soll dem aktuellen Autors entsprechen	
+nodes.push({"name": thisAuthorName, "group": 1});
+
 $.each(contributorNames, function (key, value) {
 	nodes.push ({
 		//Alle ausser dem aktuellen Autor sind in group 2
@@ -74,20 +93,21 @@ $.each(contributorNames, function (key, value) {
 	
 	links.push ({
 		//Ausgangspunkt ist immer der Autor in der Mitte
-		"source": 0, "target": value, "value": 1
+		"source": key+1, "target": 0, "value": 1
 	});
-	
-	dataObject.push ({
-		//aktueller Autor: group 1
-		"nodes": [{"name": thisAuthorName, "group": 1}, nodes],
-		"links": links
-	});
-	
-	//console.log(key +" : " + value._source["dct:contributor"]);
 	
 });
 
 
+//Vorbereitung des Datenobjekts für den Graphen
+
+dataObject.nodes = nodes;
+dataObject.links = links;
+
+console.log(dataObject);
+
+//Erzeugung des eigentlichen Graphen
+/*
 var width = 960,
     height = 500;
 
