@@ -89,7 +89,7 @@ $.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/per
 						
 						links.push ({
 							//Ausgangspunkt ist immer der Autor in der Mitte
-							"source": key+1, "target": 0, "value": 1
+							"source": key+1, "target": 0, "value": 5
 						});
 						
 					});
@@ -101,15 +101,25 @@ $.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/per
 					console.log(dataObject);		
 					
 					//Erzeugung des eigentlichen Graphen
+					
+					var palette = {
+						"sbgreen": "#009973",
+						"sbgreen2": "#004d39",
+						"lightergreen": "#00cc99",
+						"lightgreen": "#00ffbf",
+						"darkergreen": "#008060",
+						"darkgreen": "#004d39",
+						"darkgreen2": "#001a13"
+					}
 
 					var width = 960,
 						height = 500;
 
-					var color = d3.scale.category20();
+					//var color = d3.scale.category20();
 
 					var force = d3.layout.force()
 						.gravity(0.1)
-						.charge(-120)
+						.charge(-1000)
 						.linkDistance(30)
 						.size([width, height]);
 
@@ -128,19 +138,26 @@ $.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/per
 					  .data(graph.links)
 					.enter().append("line")
 					  .attr("class", "link")
+					  .style("stroke", "#008060")
 					  .style("stroke-width", function(d) { return Math.sqrt(d.value); });
-
-				  var node = svg.selectAll(".node")
-					  .data(graph.nodes)
+									  					  
+					   var node = svg.selectAll(".node")
+					   .data(graph.nodes)	
 					.enter().append("circle")
 					  .attr("class", "node")
-					  .attr("r", 5)
-					  .style("fill", function(d) { return color(d.group); })
+					  .attr("r", 15)
+					  .style("fill", palette.sbgreen)
 					  .call(force.drag);
-
-				  node.append("title")
-					  .text(function(d) { return d.name; });
-
+				  
+				  node.append("text")
+					  .text(function(d) { return d.name; })
+					  /*//Hat noch keinen Effekt - warum??
+					  .attr("font-familiy", "Arial")
+					  .attr("fill", palette.darkgreen)
+					  .attr("text-anchor", "end")
+					  .attr("font-size", "1em")*/;
+					  
+					  				
 				  force.on("tick", function() {
 					link.attr("x1", function(d) { return d.source.x; })
 						.attr("y1", function(d) { return d.source.y; })
