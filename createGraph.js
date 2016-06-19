@@ -1,6 +1,7 @@
 var dataObject = {};      //enthält später die Objekte "nodes" und "links"
 var thisAuthor = "";
 var thisAuthorName = "";  //Name des aktuell angezeigten Autors als String 	
+var thisAuthorLastName = ""; //Falls nur foaf:name vorhanden ist
 var nodes = [];           //Knoten, die Autoren darstellen
 var links = [];           //Verknüpfungen zwischen den Knoten
 var contributorIds = [];  //Array der Autoren-IDs aus den bibliographicResources
@@ -14,17 +15,19 @@ var queryString = "";      //String mit Autoren-IDs, mit dem die Multi-Autoren-S
 //5b590f17-2263-309f-bf3a-6c21e1970ad9
 //4ca6d8e1-694e-3fea-9cde-bc09a7b7f61c
 //51119347-fb51-37d9-ba90-af15b9b8aeff
-//514ac9b2-4204-3bd1-b7e1-bf6a58d81530 
+//514ac9b2-4204-3bd1-b7e1-bf6a58d81530 (Cucca, viele Co-Autoren, Name in foaf:name)
 //05908eeb-56e9-37ed-b58d-5732d6a4e42f 
 //51119347-fb51-37d9-ba90-af15b9b8aeff
 //4ca699c9-5d74-3a9b-a24d-9d295f34508e
  
 //Abfrage der Ein-Autoren-Schnittstelle, welcher Autoren-Infos inkl. bibliographicResources zurückgibt
-$.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/person/4ca699c9-5d74-3a9b-a24d-9d295f34508e&method=getAuthor&searcher=Elasticsearch", function (data) {
+$.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/person/514ac9b2-4204-3bd1-b7e1-bf6a58d81530&method=getAuthor&searcher=Elasticsearch", function (data) {
 	var thisAuthor = data.person[0]['_source']['@id'];  //id des aktuellen Autors als URI	
 	
 	//Name des aktuellen Autors als String
 	thisAuthorName = data.person[0]['_source']['foaf:firstName'] + " " + data.person[0]['_source']['foaf:lastName']
+	thisAuthorLastName = data.person[0]['_source']['foaf:name']
+	
 	
 	//Alle Autoren-IDs aus den bibliographicResources (ausser thisAuthor) sollen ins Array contributorIds geschrieben werden
 	$.each(data.bibliographicResource, function (key, value) {
@@ -70,16 +73,25 @@ $.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/per
 					$.each(result['person'], function (key, value) {
 						firstName = value['_source']['foaf:firstName'];
 						lastName = value['_source']['foaf:lastName'];
-						name = value['_source']['foaf:name'];		
-						contributorNames.push (firstName + " " + lastName);
-						//contributorNames.push (name);
+						name = value['_source']['foaf:name'];	
+						if (firstName) {	
+							contributorNames.push (firstName + " " + lastName);
+						}
+						else {							
+							contributorNames.push (name);
+						}
 					});	
 					
 					//Array, in dem die Namen der Co-Autoren stehen
 					console.log(contributorNames);
 					
 					//Das erste Objekt des node-Arrays soll dem aktuellen Autor entsprechen	
-					nodes.push({"name": thisAuthorName, "group": 1});
+					if (thisAuthorName !== 'undefined undefined') {
+						nodes.push({"name": thisAuthorName, "group": 1});
+					}
+					else {
+						nodes.push({"name": thisAuthorLastName, "group": 1});
+					}
 
 					$.each(contributorNames, function (key, value) {
 						nodes.push ({
@@ -140,8 +152,23 @@ $.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/per
 					  .attr("class", "link")
 					  .style("stroke", "#008060")
 					  .style("stroke-width", function(d) { return Math.sqrt(d.value); });
-									  					  
-					   var node = svg.selectAll(".node")
+					 
+					/* Dieser Block sollte das Einfügen von Textlabels ermöglichen, 
+					 * aber es funktioniert noch nicht 
+					var node = svg.selectAll(".node")
+						.data(graph.nodes)
+					  .enter().append("g")
+						.attr("class", "node")
+						.call(force.drag);  
+					
+					node.append("circle")					  
+					  .attr('x', function(d) { return d.x; })
+					  .attr('y', function(d) { return d.y; })					  
+					  .attr("r", 15)
+					  .style("fill", palette.sbgreen);					  
+					*/
+						  					  
+				   var node = svg.selectAll(".node")
 					   .data(graph.nodes)	
 					.enter().append("circle")
 					  .attr("class", "node")
@@ -149,13 +176,14 @@ $.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/per
 					  .style("fill", palette.sbgreen)
 					  .call(force.drag);
 				  
-				  node.append("text")
+				  //node.append("text")
+				  node.append("title")
 					  .text(function(d) { return d.name; })
-					  /*//Hat noch keinen Effekt - warum??
+					  /*Hat noch keinen Effekt - warum??
 					  .attr("font-familiy", "Arial")
 					  .attr("fill", palette.darkgreen)
 					  .attr("text-anchor", "end")
-					  .attr("font-size", "1em")*/;
+					  .attr("font-size", "1em"); */
 					  
 					  				
 				  force.on("tick", function() {
