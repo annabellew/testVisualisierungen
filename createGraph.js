@@ -20,8 +20,7 @@ var queryString = "";      //String mit Autoren-IDs, mit dem die Multi-Autoren-S
 //4ca699c9-5d74-3a9b-a24d-9d295f34508e
  
 //Abfrage der Ein-Autoren-Schnittstelle, welcher Autoren-Infos inkl. bibliographicResources zurückgibt
-$.getJSON( "http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/person/4ca699c9-5d74-3a9b-a24d-9d295f34508e&method=getAuthor&searcher=Elasticsearch", 
-function (data) {
+$.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/person/4ca699c9-5d74-3a9b-a24d-9d295f34508e&method=getAuthor&searcher=Elasticsearch", function (data) {
 	var thisAuthor = data.person[0]['_source']['@id'];  //id des aktuellen Autors als URI	
 	
 	//Name des aktuellen Autors als String
@@ -74,87 +73,90 @@ function (data) {
 						name = value['_source']['foaf:name'];		
 						contributorNames.push (firstName + " " + lastName);
 						//contributorNames.push (name);
-					});				
-			},  
-			error: function(e) {console.log(e);}			
-	});
-	//Array, in dem die Namen der Co-Autoren stehen
-	console.log(contributorNames);
+					});	
+					
+					//Array, in dem die Namen der Co-Autoren stehen
+					console.log(contributorNames);
+					
+					//Das erste Objekt des node-Arrays soll dem aktuellen Autor entsprechen	
+					nodes.push({"name": thisAuthorName, "group": 1});
+
+					$.each(contributorNames, function (key, value) {
+						nodes.push ({
+							//Alle ausser dem aktuellen Autor sind in group 2
+							"name": value, "group":2
+						});				
+						
+						links.push ({
+							//Ausgangspunkt ist immer der Autor in der Mitte
+							"source": key+1, "target": 0, "value": 1
+						});
+						
+					});
+					//Vorbereitung des Datenobjekts für den Graphen
+
+					dataObject.nodes = nodes;
+					dataObject.links = links;
+
+					console.log(dataObject);		
+					
+					//Erzeugung des eigentlichen Graphen
+
+					var width = 960,
+						height = 500;
+
+					var color = d3.scale.category20();
+
+					var force = d3.layout.force()
+						.gravity(0.1)
+						.charge(-120)
+						.linkDistance(30)
+						.size([width, height]);
+
+					var svg = d3.select("body").append("svg")
+						.attr("width", width)
+						.attr("height", height); 
+
+					var graph = dataObject;  
+
+				  force
+					  .nodes(graph.nodes)
+					  .links(graph.links)
+					  .start();
+
+				  var link = svg.selectAll(".link")
+					  .data(graph.links)
+					.enter().append("line")
+					  .attr("class", "link")
+					  .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+
+				  var node = svg.selectAll(".node")
+					  .data(graph.nodes)
+					.enter().append("circle")
+					  .attr("class", "node")
+					  .attr("r", 5)
+					  .style("fill", function(d) { return color(d.group); })
+					  .call(force.drag);
+
+				  node.append("title")
+					  .text(function(d) { return d.name; });
+
+				  force.on("tick", function() {
+					link.attr("x1", function(d) { return d.source.x; })
+						.attr("y1", function(d) { return d.source.y; })
+						.attr("x2", function(d) { return d.target.x; })
+						.attr("y2", function(d) { return d.target.y; });
+
+					node.attr("cx", function(d) { return d.x; })
+						.attr("cy", function(d) { return d.y; });	
+					});										
+				}
+		});
 });
-
-//Das erste Objekt des node-Arrays soll dem aktuellen Autors entsprechen	
-nodes.push({"name": thisAuthorName, "group": 1});
-
-$.each(contributorNames, function (key, value) {
-	nodes.push ({
-		//Alle ausser dem aktuellen Autor sind in group 2
-		"name": value, "group":2
-	});				
 	
-	links.push ({
-		//Ausgangspunkt ist immer der Autor in der Mitte
-		"source": key+1, "target": 0, "value": 1
-	});
+
+
 	
-});
-
-
-//Vorbereitung des Datenobjekts für den Graphen
-
-dataObject.nodes = nodes;
-dataObject.links = links;
-
-console.log(dataObject);
-
-//Erzeugung des eigentlichen Graphen
-
-var width = 960,
-    height = 500;
-
-var color = d3.scale.category20();
-
-var force = d3.layout.force()
-    .gravity(0.1)
-    .charge(-120)
-    .linkDistance(30)
-    .size([width, height]);
-
-var svg = d3.select("body").append("svg")
-    .attr("width", width)
-    .attr("height", height); 
-
-var graph = dataObject;  
-
-  force
-      .nodes(graph.nodes)
-      .links(graph.links)
-      .start();
-
-  var link = svg.selectAll(".link")
-      .data(graph.links)
-    .enter().append("line")
-      .attr("class", "link")
-      .style("stroke-width", function(d) { return Math.sqrt(d.value); });
-
-  var node = svg.selectAll(".node")
-      .data(graph.nodes)
-    .enter().append("circle")
-      .attr("class", "node")
-      .attr("r", 5)
-      .style("fill", function(d) { return color(d.group); })
-      .call(force.drag);
-
-  node.append("title")
-      .text(function(d) { return d.name; });
-
-  force.on("tick", function() {
-    link.attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
-
-    node.attr("cx", function(d) { return d.x; })
-        .attr("cy", function(d) { return d.y; });
-  });
+		
 
 
