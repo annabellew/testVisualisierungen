@@ -107,7 +107,7 @@ dataObject.links = links;
 console.log(dataObject);
 
 //Erzeugung des eigentlichen Graphen
-/*
+
 var width = 960,
     height = 500;
 
@@ -115,16 +115,15 @@ var color = d3.scale.category20();
 
 var force = d3.layout.force()
     .gravity(0.1)
-    .charge(-1000)
+    .charge(-120)
     .linkDistance(30)
     .size([width, height]);
 
 var svg = d3.select("body").append("svg")
     .attr("width", width)
-    .attr("height", height);
+    .attr("height", height); 
 
-d3.json(dataObject, function(error, graph) {
-  if (error) throw error;
+var graph = dataObject;  
 
   force
       .nodes(graph.nodes)
@@ -157,5 +156,5 @@ d3.json(dataObject, function(error, graph) {
     node.attr("cx", function(d) { return d.x; })
         .attr("cy", function(d) { return d.y; });
   });
-});
-*/
+
+
