@@ -126,7 +126,7 @@ $.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/per
 
 					var width = 960,
 						height = 500
-						circleWidth = 15;
+						circleWidth = 10;
 
 					var force = d3.layout.force()
 						.nodes(nodes)
@@ -160,13 +160,13 @@ $.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/per
 					  .attr("class", "node")
 					  .call(force.drag);  					  
 					
-					//xGroup = node.selectAll("g").select("cx");
-					//console.log(xGroup);
-										
 					node.append("circle")					  
 					  .attr("cx", graph.nodes.x)
 					  .attr("cy", graph.nodes.y)				  
-					  .attr("r", circleWidth)
+					  .attr("r", function (d, i) {
+						if (i == 0) { return "20"}
+						else { return circleWidth }
+						})
 					  .attr("fill", palette.sbgreen);	
 					  
 					  console.log(graph.nodes);
