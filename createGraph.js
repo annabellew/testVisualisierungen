@@ -21,7 +21,8 @@ var queryString = "";      //String mit Autoren-IDs, mit dem die Multi-Autoren-S
 //4ca699c9-5d74-3a9b-a24d-9d295f34508e
  
 //Abfrage der Ein-Autoren-Schnittstelle, welcher Autoren-Infos inkl. bibliographicResources zurückgibt
-$.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/person/514ac9b2-4204-3bd1-b7e1-bf6a58d81530&method=getAuthor&searcher=Elasticsearch", function (data) {
+$.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/person/514ac9b2-4204-3bd1-b7e1-bf6a58d81530&method=getAuthorMulti&searcher=Elasticsearch",
+function (data) {
 	var thisAuthor = data.person[0]['_source']['@id'];  //id des aktuellen Autors als URI	
 	
 	//Name des aktuellen Autors als String
