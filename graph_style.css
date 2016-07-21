@@ -1,0 +1,18 @@
+/* Überschreibt, wenn angewendet, die via svg-Attribute gesetzten 
+Gestaltungselemente */
+
+.node {
+  stroke: #009973;
+  stroke-width: .7px;
+  font-family: "Calibri";
+}
+/*
+.link {
+  stroke: #009973;
+  stroke-opacity: .9;
+}
+*/
+
+body {
+	height: 100%;
+}

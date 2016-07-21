@@ -110,7 +110,7 @@ $.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/per
 					dataObject.nodes = nodes;
 					dataObject.links = links;
 
-					console.log(dataObject);		
+					//console.log(dataObject);		
 					
 					//Erzeugung des eigentlichen Graphen
 					
@@ -125,19 +125,20 @@ $.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/per
 					}
 
 					var width = 960,
-						height = 500;
-
-					//var color = d3.scale.category20();
+						height = 500
+						circleWidth = 15;
 
 					var force = d3.layout.force()
+						.nodes(nodes)
+						.links(links)
 						.gravity(0.1)
-						.charge(-1000)
-						.linkDistance(30)
+						.charge(-1000)						
 						.size([width, height]);
 
-					var svg = d3.select("body").append("svg")
+					var svg = d3.select("#vis").append("svg")
 						.attr("width", width)
-						.attr("height", height); 
+						.attr("height", height);
+						 
 
 					var graph = dataObject;  
 
@@ -146,57 +147,55 @@ $.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/per
 					  .links(graph.links)
 					  .start();
 
-				  var link = svg.selectAll(".link")
+				  var link = svg.selectAll("line")
 					  .data(graph.links)
 					.enter().append("line")
 					  .attr("class", "link")
-					  .style("stroke", "#008060")
-					  .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+					  .attr("stroke", palette.darkgreen)
+					  .style("stroke-width", "1.5");
 					 
-					/* Dieser Block sollte das Einfügen von Textlabels ermöglichen, 
-					 * aber es funktioniert noch nicht 
-					var node = svg.selectAll(".node")
-						.data(graph.nodes)
-					  .enter().append("g")
-						.attr("class", "node")
-						.call(force.drag);  
-					
-					node.append("circle")					  
-					  .attr('x', function(d) { return d.x; })
-					  .attr('y', function(d) { return d.y; })					  
-					  .attr("r", 15)
-					  .style("fill", palette.sbgreen);					  
-					*/
-						  					  
-				   var node = svg.selectAll(".node")
-					   .data(graph.nodes)	
-					.enter().append("circle")
+					var node = svg.selectAll("circle")
+					  .data(graph.nodes)
+					  .enter().append("g")	
 					  .attr("class", "node")
-					  .attr("r", 15)
-					  .style("fill", palette.sbgreen)
-					  .call(force.drag);
-				  
-				  //node.append("text")
-				  node.append("title")
-					  .text(function(d) { return d.name; })
-					  /*Hat noch keinen Effekt - warum??
-					  .attr("font-familiy", "Arial")
-					  .attr("fill", palette.darkgreen)
-					  .attr("text-anchor", "end")
-					  .attr("font-size", "1em"); */
+					  .call(force.drag);  					  
+					
+					//xGroup = node.selectAll("g").select("cx");
+					//console.log(xGroup);
+										
+					node.append("circle")					  
+					  .attr("cx", graph.nodes.x)
+					  .attr("cy", graph.nodes.y)				  
+					  .attr("r", circleWidth)
+					  .attr("fill", palette.sbgreen);	
 					  
-					  				
+					  console.log(graph.nodes);
+					  
+					node.append("text")
+						.text(function(d) { return d.name})
+						.attr("font-family", "sans-serif")
+						.attr("fill", palette.darkgreen)
+						.attr("x", circleWidth)
+						.attr("y", circleWidth)
+						.attr("text-anchor", "beginning")
+						.attr("font-size",  "1em")
+						.attr("font-family", "Calibri")					
+						
 				  force.on("tick", function() {
 					link.attr("x1", function(d) { return d.source.x; })
 						.attr("y1", function(d) { return d.source.y; })
 						.attr("x2", function(d) { return d.target.x; })
 						.attr("y2", function(d) { return d.target.y; });
 
+					node.attr("transform", function(d, i) {
+						return "translate(" + d.x + ", " + d.y + ")";
+						/*
 					node.attr("cx", function(d) { return d.x; })
-						.attr("cy", function(d) { return d.y; });	
-					});										
-				}
-		});
+						.attr("cy", function(d) { return d.y; });	*/
+					});								
+				});
+		}
+	});
 });
 	
 
