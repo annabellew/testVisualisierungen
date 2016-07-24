@@ -13,10 +13,22 @@ Annabelle Wiegart 24.07.2016
 
 */
 
+//Autoren-IDs zum Ausprobieren
+//c7a1a5c2-903c-3524-a839-4e87fccbd7f1
+//0bac9e1d-fb46-36db-80e5-a918ab485f6f (Lily Braun)
+//825b0ab5-c490-38e8-af50-4ed444e87b44
+//5b590f17-2263-309f-bf3a-6c21e1970ad9
+//4ca6d8e1-694e-3fea-9cde-bc09a7b7f61c
+//51119347-fb51-37d9-ba90-af15b9b8aeff
+//514ac9b2-4204-3bd1-b7e1-bf6a58d81530 (Cucca, viele Co-Autoren, Name in foaf:name)
+//05908eeb-56e9-37ed-b58d-5732d6a4e42f 
+//51119347-fb51-37d9-ba90-af15b9b8aeff
+//4ca699c9-5d74-3a9b-a24d-9d295f34508e (Eric Khoo)
+
 //Variablen
 
 var dataObject = {};      //enthält später die Objekte "nodes" und "links"
-var thisAuthor = "http://data.swissbib.ch/person/4ca699c9-5d74-3a9b-a24d-9d295f34508e";	  //enthält ID des zentralen Autors
+var thisAuthor = "http://data.swissbib.ch/person/514ac9b2-4204-3bd1-b7e1-bf6a58d81530";	  //enthält ID des zentralen Autors
 var dataObject = {};      //enthält später die Objekte "nodes" und "links"
 var thisAuthorName = "";  //Name des aktuell angezeigten Autors als String 	
 var thisAuthorLastName = ""; //Falls nur foaf:name vorhanden ist
@@ -57,7 +69,8 @@ var innerGetAuthorName = function (authorId) {
 		url: "http://193.5.58.96/sbrd/Ajax/Json?method=getAuthorMulti&searcher=Elasticsearch",
 		type: "POST",					
 		data: {"lookfor": authorId},
-		success: function (result) {			
+		success: function (result) {	
+			//console.log(result['person'][0]['_source']['foaf:lastName']);
 			innerGetContributors(result)
 		}
 	});
@@ -109,7 +122,7 @@ var innerGetContributors = function (json) {
 var createContribNodesLinks = function (json) {
 	writeNameArray(json);	
 	writeNodes(contributorNames, "links");
-	//console.log("contributorIds: " + contributorIds);
+	console.log("contributorIds: " + contributorIds);
 	reiterateContributors(contributorIds);
 }
 
@@ -134,7 +147,7 @@ var writeContributorArray = function (json) {
 				contributorIds.push (value);
 			}
 		});
-		//console.log(contributorIds);
+		console.log(contributorIds);
 		//console.log(thisAuthor);
 	});
 }
