@@ -1,16 +1,23 @@
+/*
+Dies ist eine erste Version des Skripts, in dem nur ein Beziehungsgrad 
+abgebildet wird und in dem der Programmablauf noch nicht in Funktionen 
+definiert ist.
+
+Annabelle Wiegart 04.08.2016
+*/
+
 var dataObject = {};      //enthält später die Objekte "nodes" und "links"
-var thisAuthor = "";
-var thisAuthorName = "";  //Name des aktuell angezeigten Autors als String 	
-var thisAuthorLastName = ""; //Falls nur foaf:name vorhanden ist
+var thisAuthor = "http://data.swissbib.ch/person/4ca699c9-5d74-3a9b-a24d-9d295f34508e";	  //enthält ID des zentralen Autors
+var thisAuthorName = "";  //Name des aktuell angezeigten Autors als String 
 var nodes = [];           //Knoten, die Autoren darstellen
 var links = [];           //Verknüpfungen zwischen den Knoten
 var contributorIds = [];  //Array der Autoren-IDs aus den bibliographicResources
 var contributorNames = []; //Array mit den Autoren-Namen (aus Abfrage der contributorIds via Schnittstelle)
-var queryString = "";      //String mit Autoren-IDs, mit dem die Multi-Autoren-Schnittstelle abgefragt wird
+var queryString = "";      //String mit weiteren Autoren-IDs, mit dem die getAuthorMulti-Schnittstelle abgefragt wird
 
 //Autoren-IDs zum Ausprobieren
 //c7a1a5c2-903c-3524-a839-4e87fccbd7f1
-//0bac9e1d-fb46-36db-80e5-a918ab485f6f
+//0bac9e1d-fb46-36db-80e5-a918ab485f6f (Lily Braun)
 //825b0ab5-c490-38e8-af50-4ed444e87b44
 //5b590f17-2263-309f-bf3a-6c21e1970ad9
 //4ca6d8e1-694e-3fea-9cde-bc09a7b7f61c
@@ -18,40 +25,33 @@ var queryString = "";      //String mit Autoren-IDs, mit dem die Multi-Autoren-S
 //514ac9b2-4204-3bd1-b7e1-bf6a58d81530 (Cucca, viele Co-Autoren, Name in foaf:name)
 //05908eeb-56e9-37ed-b58d-5732d6a4e42f 
 //51119347-fb51-37d9-ba90-af15b9b8aeff
-//4ca699c9-5d74-3a9b-a24d-9d295f34508e
+//4ca699c9-5d74-3a9b-a24d-9d295f34508e (Eric Khoo)
  
-//Abfrage der Ein-Autoren-Schnittstelle, welcher Autoren-Infos inkl. bibliographicResources zurückgibt
-$.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=http://data.swissbib.ch/person/514ac9b2-4204-3bd1-b7e1-bf6a58d81530&method=getAuthorMulti&searcher=Elasticsearch",
+//Abfrage der getAuthorMulti-Schnittstelle mit der ID des zentralen Autors
+$.getJSON("http://193.5.58.96/sbrd/Ajax/Json?lookfor=" + thisAuthor + "&method=getAuthorMulti&searcher=Elasticsearch",
 function (data) {
-	var thisAuthor = data.person[0]['_source']['@id'];  //id des aktuellen Autors als URI	
+	/*thisAuthor = data.person[0]['_source']['@id'];  //ID des aktuellen Autors als URI (falls nicht bereits beim 
+    Aufruf bekannt) */	
 	
-	//Name des aktuellen Autors als String
-	thisAuthorName = data.person[0]['_source']['foaf:firstName'] + " " + data.person[0]['_source']['foaf:lastName']
-	thisAuthorLastName = data.person[0]['_source']['foaf:name']
-	
+	//Name des aktuellen Autors als String wird in Variable thisAuthorName geschrieben
+	var authorName = data.person[0]['_source']['foaf:firstName'] + " " + data.person[0]['_source']['foaf:lastName'];
+	var authorLastName = data.person[0]['_source']['foaf:name']; //Falls nur foaf:name vorhanden ist
+	if (authorName !== "undefined undefined") {thisAuthorName = authorName;}
+	else {thisAuthorName = authorLastName;}	
 	
 	//Alle Autoren-IDs aus den bibliographicResources (ausser thisAuthor) sollen ins Array contributorIds geschrieben werden
 	$.each(data.bibliographicResource, function (key, value) {
 		
 		var authorId = value['_source']["dct:contributor"];
-		//console.log(authorId);
+		console.log(authorId);
 		
-		//Prüfen, ob der Wert ein Array ist
-		if($.isArray(authorId)) {
-			$.each(authorId, function (key, value){
-				//Prüfen, ob die ID die des aktuellen Autors ist
-				if (value !== thisAuthor) {
-					contributorIds.push (value);
-				}
-			});			
-		} 
-		else {
+		//Schleife, falls der Wert ein Array ist		
+		$.each(authorId, function (key, value){
 			//Prüfen, ob die ID die des aktuellen Autors ist
-			if (authorId !== thisAuthor) {				 
-				contributorIds.push (authorId);
+			if (value !== thisAuthor) {
+				contributorIds.push (value);
 			}
-		}
-		
+		});
 	});
 	
 	//String mit durch Kommata getrennten Autoren-IDs, lookfor-Wert für nachfolgenden AJAX-Request
@@ -64,7 +64,7 @@ function (data) {
 		}
 	});		
 	
-	//Abfrage der Mehr-Autoren-Schnittstelle: Ermittlung der Co-Autoren-Namen 	
+	//Ermittlung der Co-Autoren-Namen 	
 	$.ajax({
 			url: "http://193.5.58.96/sbrd/Ajax/Json?method=getAuthorMulti&searcher=Elasticsearch",
 			type: "POST",					
@@ -86,14 +86,9 @@ function (data) {
 					//Array, in dem die Namen der Co-Autoren stehen
 					console.log(contributorNames);
 					
-					//Das erste Objekt des node-Arrays soll dem aktuellen Autor entsprechen	
-					if (thisAuthorName !== 'undefined undefined') {
-						nodes.push({"name": thisAuthorName, "group": 1});
-					}
-					else {
-						nodes.push({"name": thisAuthorLastName, "group": 1});
-					}
-
+					//Das erste Objekt des node-Arrays soll dem aktuellen Autor entsprechen						
+					nodes.push({"name": thisAuthorName, "group": 1});
+					
 					$.each(contributorNames, function (key, value) {
 						nodes.push ({
 							//Alle ausser dem aktuellen Autor sind in group 2
@@ -106,6 +101,7 @@ function (data) {
 						});
 						
 					});
+					
 					//Vorbereitung des Datenobjekts für den Graphen
 
 					dataObject.nodes = nodes;

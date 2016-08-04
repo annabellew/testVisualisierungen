@@ -28,7 +28,7 @@ Annabelle Wiegart 24.07.2016
 //Variablen
 
 var dataObject = {};      //enthält später die Objekte "nodes" und "links"
-var thisAuthor = "http://data.swissbib.ch/person/514ac9b2-4204-3bd1-b7e1-bf6a58d81530";	  //enthält ID des zentralen Autors
+var thisAuthor = "http://data.swissbib.ch/person/4ca699c9-5d74-3a9b-a24d-9d295f34508e";	  //enthält ID des zentralen Autors
 var dataObject = {};      //enthält später die Objekte "nodes" und "links"
 var thisAuthorName = "";  //Name des aktuell angezeigten Autors als String 	
 var thisAuthorLastName = ""; //Falls nur foaf:name vorhanden ist
@@ -122,14 +122,90 @@ var innerGetContributors = function (json) {
 var createContribNodesLinks = function (json) {
 	writeNameArray(json);	
 	writeNodes(contributorNames, "links");
-	console.log("contributorIds: " + contributorIds);
-	reiterateContributors(contributorIds);
+	//console.log("contributorIds: " + contributorIds);
+	//reiterateContributors(contributorIds);
+	
+	//Vorbereitung und Erzeugung des Graphen
+	//Dieser Abschnitt muss in der innersten Funktion platziert werden
+	dataObject.nodes = nodes;
+	dataObject.links = links;
+	
+	var width = 960,
+	height = 500
+	circleWidth = 10;
+	
+	var force = d3.layout.force()
+		.nodes(nodes)
+		.links(links)
+		.gravity(0.1)
+		.charge(-1000)						
+		.size([width, height]);
+
+	var svg = d3.select("#vis").append("svg")
+		.attr("width", width)
+		.attr("height", height);
+		 
+
+	var graph = dataObject;  
+
+  force
+	  .nodes(graph.nodes)
+	  .links(graph.links)
+	  .start();
+
+  var link = svg.selectAll("line")
+	  .data(graph.links)
+	.enter().append("line")
+	  .attr("class", "link")
+	  .attr("stroke", palette.darkgreen)
+	  .style("stroke-width", "1.5");
+		 
+	var node = svg.selectAll("circle")
+	  .data(graph.nodes)
+	  .enter().append("g")	
+	  .attr("class", "node")
+	  .call(force.drag);  					  
+		
+	node.append("circle")					  
+	  .attr("cx", graph.nodes.x)
+	  .attr("cy", graph.nodes.y)				  
+	  .attr("r", function (d, i) {
+		if (i == 0) { return "20"}
+		else { return circleWidth }
+		})
+	  .attr("fill", palette.sbgreen);	
+	  
+	  //console.log(graph.nodes);
+		  
+	node.append("text")
+		.text(function(d) { return d.name})
+		.attr("font-family", "sans-serif")
+		.attr("fill", palette.darkgreen)
+		.attr("x", circleWidth)
+		.attr("y", circleWidth)
+		.attr("text-anchor", "beginning")
+		.attr("font-size",  "1em")
+		.attr("font-family", "Calibri");					
+			
+    force.on("tick", function() {
+		link.attr("x1", function(d) { return d.source.x; })
+			.attr("y1", function(d) { return d.source.y; })
+			.attr("x2", function(d) { return d.target.x; })
+			.attr("y2", function(d) { return d.target.y; });
+
+		node.attr("transform", function(d, i) {
+			return "translate(" + d.x + ", " + d.y + ")";
+		
+		});								
+	});	
 }
 
 //Verarbeitung der Infos zu äusseren contributors, Erzeugung des Graphen
 var innerCreateContribNodesLinks = function (json) {
 	writeNameArray(json);	
-	writeNodes(contributorNames, "links");	
+	writeNodes(contributorNames, "links");
+
+	
 }
 
 //contributorIds in Array schreiben
@@ -147,7 +223,7 @@ var writeContributorArray = function (json) {
 				contributorIds.push (value);
 			}
 		});
-		console.log(contributorIds);
+		//console.log(contributorIds);
 		//console.log(thisAuthor);
 	});
 }
@@ -214,80 +290,7 @@ var reiterateContributors = function (idArray) {
 		//console.log("thisAuthor: " + thisAuthor);
 		innerGetAuthorName(thisAuthor);
 	});	
-	
-	//Vorbereitung des Datenobjekts für den Graphen
 
-	dataObject.nodes = nodes;
-	dataObject.links = links;
-	
-	var width = 960,
-	height = 500
-	circleWidth = 10;
-
-	var force = d3.layout.force()
-		.nodes(nodes)
-		.links(links)
-		.gravity(0.1)
-		.charge(-1000)						
-		.size([width, height]);
-
-	var svg = d3.select("#vis").append("svg")
-		.attr("width", width)
-		.attr("height", height);
-		 
-
-	var graph = dataObject;  
-
-  force
-	  .nodes(graph.nodes)
-	  .links(graph.links)
-	  .start();
-
-  var link = svg.selectAll("line")
-	  .data(graph.links)
-	.enter().append("line")
-	  .attr("class", "link")
-	  .attr("stroke", palette.darkgreen)
-	  .style("stroke-width", "1.5");
-		 
-	var node = svg.selectAll("circle")
-	  .data(graph.nodes)
-	  .enter().append("g")	
-	  .attr("class", "node")
-	  .call(force.drag);  					  
-		
-	node.append("circle")					  
-	  .attr("cx", graph.nodes.x)
-	  .attr("cy", graph.nodes.y)				  
-	  .attr("r", function (d, i) {
-		if (i == 0) { return "20"}
-		else { return circleWidth }
-		})
-	  .attr("fill", palette.sbgreen);	
-	  
-	  //console.log(graph.nodes);
-		  
-	node.append("text")
-		.text(function(d) { return d.name})
-		.attr("font-family", "sans-serif")
-		.attr("fill", palette.darkgreen)
-		.attr("x", circleWidth)
-		.attr("y", circleWidth)
-		.attr("text-anchor", "beginning")
-		.attr("font-size",  "1em")
-		.attr("font-family", "Calibri")					
-			
-    force.on("tick", function() {
-		link.attr("x1", function(d) { return d.source.x; })
-			.attr("y1", function(d) { return d.source.y; })
-			.attr("x2", function(d) { return d.target.x; })
-			.attr("y2", function(d) { return d.target.y; });
-
-		node.attr("transform", function(d, i) {
-			return "translate(" + d.x + ", " + d.y + ")";
-		
-			});								
-	});
 }
 
 //Programmablauf
